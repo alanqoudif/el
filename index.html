@@ -989,7 +989,7 @@
         // Load questions on page load
         async function loadQuestions() {
             try {
-                const response = await fetch('/api/questions');
+                const response = await fetch('/.netlify/functions/questions');
                 questions = await response.json();
             } catch (error) {
                 console.error('Error loading questions:', error);
@@ -1123,7 +1123,7 @@
             }
             
             try {
-                const response = await fetch('/api/submit', {
+                const response = await fetch('/.netlify/functions/submit', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
