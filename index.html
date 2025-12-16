@@ -1043,10 +1043,17 @@
         }
 
         .result-item {
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 12px;
+            margin-bottom: 12px;
             border-radius: 8px;
             border-left: 4px solid;
+        }
+        
+        @media (min-width: 360px) {
+            .result-item {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
         }
         
         @media (min-width: 768px) {
@@ -1072,9 +1079,19 @@
 
         .result-question {
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #1f2937;
-            font-size: 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        @media (min-width: 360px) {
+            .result-question {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
         }
         
         @media (min-width: 768px) {
@@ -1084,8 +1101,18 @@
         }
 
         .result-answer {
-            margin-top: 8px;
-            font-size: 14px;
+            margin-top: 6px;
+            font-size: 13px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        @media (min-width: 360px) {
+            .result-answer {
+                font-size: 14px;
+                margin-top: 8px;
+            }
         }
 
         .result-label {
@@ -1179,6 +1206,45 @@
         .explanation-text {
             color: #4b5563;
             line-height: 1.7;
+        }
+        
+        /* تحسينات عامة للاستجابة */
+        @media (max-width: 359px) {
+            .form-input {
+                font-size: 16px; /* منع zoom على iOS */
+            }
+        }
+        
+        /* تحسين scroll behavior */
+        * {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* تحسين contrast للألوان */
+        @media (prefers-contrast: high) {
+            .option {
+                border-width: 2.5px;
+            }
+            
+            .question-btn {
+                border-width: 2.5px;
+            }
+        }
+        
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 359px) {
+            .container {
+                padding: 8px;
+                gap: 8px;
+            }
+            
+            .main-content {
+                padding: 12px;
+            }
+            
+            .sidebar {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -1297,6 +1363,74 @@
         let timeLeft = 5400; // 90 minutes in seconds
         let timerInterval = null;
         let studentName = '';
+        let shouldClearCache = false; // Flag to clear cache when user wants to exit after Clear
+
+        // Save quiz state to localStorage
+        function saveQuizState() {
+            if (shouldClearCache) {
+                return; // Don't save if user wants to clear
+            }
+            
+            const quizState = {
+                answers: answers,
+                visited: visited,
+                currentQuestionIndex: currentQuestionIndex,
+                timeLeft: timeLeft,
+                studentName: studentName
+            };
+            
+            try {
+                localStorage.setItem('quizState', JSON.stringify(quizState));
+            } catch (error) {
+                console.error('Error saving quiz state:', error);
+            }
+        }
+
+        // Load quiz state from localStorage
+        async function loadQuizState() {
+            // Wait for questions to be loaded first
+            if (questions.length === 0) {
+                await loadQuestions();
+            }
+            
+            try {
+                const savedState = localStorage.getItem('quizState');
+                if (savedState) {
+                    const quizState = JSON.parse(savedState);
+                    answers = quizState.answers || Array(77).fill(null);
+                    visited = quizState.visited || Array(77).fill(false);
+                    currentQuestionIndex = quizState.currentQuestionIndex || 0;
+                    timeLeft = quizState.timeLeft || 5400;
+                    studentName = quizState.studentName || '';
+                    
+                    // Restore UI if quiz was in progress
+                    if (studentName && quizState.currentQuestionIndex !== undefined && questions.length > 0) {
+                        document.getElementById('userInitial').textContent = studentName.charAt(0).toUpperCase();
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('quizScreen').classList.remove('hidden');
+                        
+                        // Resume timer
+                        startTimer();
+                        displayQuestion(currentQuestionIndex);
+                        createQuestionGrid();
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading quiz state:', error);
+            }
+            return false;
+        }
+
+        // Clear quiz state from localStorage
+        function clearQuizState() {
+            try {
+                localStorage.removeItem('quizState');
+            } catch (error) {
+                console.error('Error clearing quiz state:', error);
+            }
+        }
 
         // Load questions on page load
         async function loadQuestions() {
@@ -1309,12 +1443,18 @@
         }
 
         // Initialize quiz
-        function initQuiz() {
-            loadQuestions();
+        async function initQuiz() {
+            // Load questions first
+            await loadQuestions();
+            
+            // Try to restore previous state
+            await loadQuizState();
+            
             document.getElementById('loginForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 studentName = document.getElementById('studentName').value.trim();
                 if (studentName) {
+                    shouldClearCache = false; // Reset clear flag on new start
                     document.getElementById('userInitial').textContent = studentName.charAt(0).toUpperCase();
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('quizScreen').classList.remove('hidden');
@@ -1323,6 +1463,29 @@
                     createQuestionGrid();
                 }
             });
+
+            // Save state when tab becomes hidden (user switches tabs or minimizes)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && studentName) {
+                    saveQuizState();
+                }
+            });
+
+            // Save state before page unload
+            window.addEventListener('beforeunload', (e) => {
+                if (studentName && !shouldClearCache) {
+                    saveQuizState();
+                } else if (shouldClearCache) {
+                    clearQuizState();
+                }
+            });
+
+            // Save state periodically (every 30 seconds) as backup
+            setInterval(() => {
+                if (studentName && !shouldClearCache) {
+                    saveQuizState();
+                }
+            }, 30000);
         }
 
         // Start timer
@@ -1372,18 +1535,47 @@
             });
             
             updateQuestionGrid();
+            // Auto-save after displaying question
+            if (studentName && !shouldClearCache) {
+                saveQuizState();
+            }
         }
 
         // Select option
         function selectOption(optionIndex) {
             answers[currentQuestionIndex] = optionIndex;
             displayQuestion(currentQuestionIndex);
+            // Auto-save when answer is selected
+            if (studentName && !shouldClearCache) {
+                saveQuizState();
+            }
         }
 
         // Clear response
         function clearResponse() {
             answers[currentQuestionIndex] = null;
             displayQuestion(currentQuestionIndex);
+            
+            // Ask user if they want to clear and exit
+            if (confirm('Do you want to clear all progress and exit?')) {
+                shouldClearCache = true;
+                clearQuizState();
+                // Reset quiz
+                answers = Array(77).fill(null);
+                visited = Array(77).fill(false);
+                currentQuestionIndex = 0;
+                timeLeft = 5400;
+                studentName = '';
+                shouldClearCache = false;
+                
+                // Go back to login screen
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                }
+                document.getElementById('quizScreen').classList.add('hidden');
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('studentName').value = '';
+            }
         }
 
         // Save answer
@@ -1433,6 +1625,9 @@
             if (timerInterval) {
                 clearInterval(timerInterval);
             }
+            
+            // Clear saved state when quiz is finished
+            clearQuizState();
             
             try {
                 const response = await fetch('/api/submit', {
@@ -1502,6 +1697,13 @@
                 container.appendChild(item);
             });
         }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeHelp();
+            }
+        });
 
         // Initialize on page load
         initQuiz();
