@@ -490,8 +490,48 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ error: 'Request body is missing' })
+      };
+    }
+
     const data = JSON.parse(event.body);
     const { answers, studentName } = data;
+    
+    if (!answers || !Array.isArray(answers)) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ error: 'Invalid answers format' })
+      };
+    }
+    
+    if (!studentName || typeof studentName !== 'string' || studentName.trim() === '') {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS'
+        },
+        body: JSON.stringify({ error: 'Student name is required' })
+      };
+    }
+    
     let score = 0;
     const results = questions.map((q, index) => {
       const userAnswer = answers[index];
@@ -519,18 +559,21 @@ exports.handler = async (event, context) => {
         score,
         total: questions.length,
         percentage: ((score / questions.length) * 100).toFixed(2),
-        studentName,
+        studentName: studentName.trim(),
         results
       })
     };
   } catch (error) {
+    console.error('Error processing submission:', error);
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       },
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: JSON.stringify({ error: 'Internal server error', details: error.message })
     };
   }
 };

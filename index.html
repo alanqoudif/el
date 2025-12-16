@@ -1134,11 +1134,25 @@
                     })
                 });
                 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    console.error('Server error:', response.status, errorData);
+                    alert(`Error submitting quiz: ${errorData.error || 'Server returned an error'}. Please try again.`);
+                    return;
+                }
+                
                 const results = await response.json();
+                
+                if (!results || !results.results) {
+                    console.error('Invalid response format:', results);
+                    alert('Error submitting quiz: Invalid response from server. Please try again.');
+                    return;
+                }
+                
                 displayResults(results);
             } catch (error) {
                 console.error('Error submitting quiz:', error);
-                alert('Error submitting quiz. Please try again.');
+                alert('Error submitting quiz. Please check your connection and try again.');
             }
         }
 
