@@ -1,5 +1,5 @@
 import { serve } from "bun";
-import { questions } from "./netlify/functions/questions.js";
+import questions from "./netlify/functions/questions-data.js";
 import { supabase } from "./supabaseClient.js";
 
 // Note: Ensure you have created a 'certificates' table in your Supabase project with columns:

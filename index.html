@@ -1080,6 +1080,7 @@
                 visited = new Array(questions.length).fill(false);
             } catch (error) {
                 console.error('Error loading questions:', error);
+                alert('Error loading quiz questions. Please check your internet connection and reload the page.');
             }
         }
 

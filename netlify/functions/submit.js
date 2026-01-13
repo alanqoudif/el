@@ -1,4 +1,4 @@
-const { questions } = require('./questions');
+const questions = require('./questions-data');
 
 exports.handler = async (event, context) => {
   // Handle CORS preflight
