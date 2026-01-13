@@ -955,6 +955,37 @@
             color: #2563eb;
             text-decoration: underline;
         }
+
+        .disclaimer {
+            text-align: center;
+            padding: 8px 12px;
+            color: #9ca3af;
+            font-size: 11px;
+            line-height: 1.4;
+            margin: 12px 0;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+
+        .disclaimer-header {
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (min-width: 480px) {
+            .disclaimer {
+                font-size: 12px;
+                padding: 10px 16px;
+            }
+            .disclaimer-header {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -971,6 +1002,10 @@
                 </div>
                 <button type="submit" class="btn-start">Start Quiz</button>
             </form>
+            <div class="disclaimer">
+                <div class="disclaimer-header">Disclaimer</div>
+                This is a simulation/unofficial quiz application and is not produced, endorsed, or affiliated with Middle East College or any official institution.
+            </div>
             <div class="footer-credits" style="margin-top: 20px; padding: 0;">
                 <p>Developed by <a href="https://www.instagram.com/its_anqoudi/" target="_blank">
                     <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="margin-bottom: -3px;">
@@ -1042,6 +1077,10 @@
                 </div>
                 <div class="questions-grid" id="questionsGrid"></div>
                 <div class="footer-credits" style="margin-top: 30px; padding: 10px 0 0 0; border-top: 1px solid #e5e7eb;">
+                    <div class="disclaimer" style="margin: 12px 0 8px 0; padding: 8px 10px;">
+                        <div class="disclaimer-header">Disclaimer</div>
+                        This is a simulation/unofficial quiz application and is not produced, endorsed, or affiliated with Middle East College or any official institution.
+                    </div>
                     <p>Developed by <a href="https://www.instagram.com/its_anqoudi/" target="_blank">its_anqoudi</a></p>
                 </div>
             </div>
